@@ -1,0 +1,77 @@
+name: NATS across sites
+tagline: One server per cluster, joined as a supercluster, so what is published at any site is received at every site.
+description: |
+  Every chosen cluster runs its own NATS server and its apps connect to
+  the one next to them. The servers join as NATS gateways over the
+  Services w8s exports between them, which makes them one supercluster: a
+  subscriber in any cluster receives what is published in another, and a
+  site that loses its link keeps serving its own apps and rejoins when it
+  is back. JetStream is on, with its store on a volume, so streams and
+  key/value buckets work locally; they stay local unless you mirror them.
+  Gateway traffic carries no credentials of its own - it is reachable only
+  through the cluster's relay, the same trust boundary as everything else
+  w8s imports. Each site also gets a nats-box shell, which is the quickest
+  way to see it work: subscribe in one cluster, publish in another.
+tags: [Messaging, Pub/sub, Supercluster, ServiceExport, Helm]
+category: messaging
+namespace: messaging
+# nats-icon-color.svg from github.com/cncf/artwork, projects/nats.
+logo: logo.svg
+source: https://docs.nats.io/running-a-nats-service/configuration/gateways
+chart:
+  url: https://github.com/nats-io/k8s/releases/download/nats-2.15.0/nats-2.15.0.tgz
+  version: 2.15.0
+
+# Every cluster runs the same thing; only the gateway list differs. The
+# Service is called `nats` at every site, so the name w8s imports it under
+# is `nats--<namespace>--<that cluster>`, which is what the gateway URLs
+# are built from - one per peer, from the list.
+deploy:
+  roles:
+    - id: site
+      label: Clusters
+      help: Each one runs a NATS server and gateways to all the others. One cluster is a plain single-site NATS.
+      pick: many
+  inputs:
+    - id: storage
+      label: JetStream store
+      help: The volume for streams and key/value buckets, per site.
+      kind: select
+      options: [1Gi, 5Gi, 10Gi, 50Gi]
+      default: 5Gi
+  values:
+    # The same Service name everywhere keeps the imported name short and
+    # predictable; past 63 characters the agent hashes it instead.
+    fullnameOverride: nats
+    # An app's Helm release may not create a PodDisruptionBudget.
+    podDisruptionBudget:
+      enabled: false
+    service:
+      ports:
+        gateway:
+          enabled: true
+    config:
+      # One server per site, not a NATS cluster inside one.
+      cluster:
+        enabled: false
+      jetstream:
+        enabled: true
+        fileStore:
+          pvc:
+            size: "{{input.storage}}"
+      gateway:
+        enabled: true
+        merge:
+          name: "{{cluster}}"
+          # One block per peer. Each site lists the others; NATS gossips
+          # the rest of the supercluster over them.
+          gateways:
+            - name: "{{peers}}"
+              urls: ["nats://nats--{{namespace}}--{{peers}}.w8s-system:7222"]
+    # w8s only watches ServiceExports, it never writes them, so the
+    # release carries the one that makes this site's gateway reachable.
+    extraResources:
+      - apiVersion: multicluster.x-k8s.io/v1alpha1
+        kind: ServiceExport
+        metadata:
+          name: nats

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Apache CouchDB">
+  <!-- Apache CouchDB's couch mark, redrawn from the PNG Fauxton ships. Apache
+       CouchDB and the couch logo are trademarks of the Apache Software
+       Foundation; shown to name the software, nothing more. -->
+  <defs>
+    <mask id="arms">
+      <rect width="200" height="200" fill="#fff"/>
+      <rect x="12" y="73" width="28" height="88" rx="14" fill="#000" stroke="#000" stroke-width="8"/>
+      <rect x="160" y="73" width="28" height="88" rx="14" fill="#000" stroke="#000" stroke-width="8"/>
+    </mask>
+  </defs>
+  <g fill="#E42528">
+    <g mask="url(#arms)">
+      <rect x="27" y="38" width="146" height="64" rx="26"/>
+      <rect x="42" y="108" width="116" height="21" rx="10.5"/>
+      <rect x="42" y="136" width="116" height="22" rx="11"/>
+    </g>
+    <rect x="12" y="73" width="28" height="88" rx="14"/>
+    <rect x="160" y="73" width="28" height="88" rx="14"/>
+  </g>
+</svg>

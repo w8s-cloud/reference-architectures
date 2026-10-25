@@ -1,0 +1,71 @@
+name: Private GPU inference
+tagline: An LLM on the GPU in one cluster, used from all the others. Prompts never leave your clusters.
+description: |
+  One cluster runs Ollama on its GPU and exports a small gateway in front
+  of it. Every cluster that uses the model runs the client side: an
+  in-cluster endpoint apps call by name (Ollama's API and an
+  OpenAI-compatible one) plus a chat page, reaching the GPU cluster
+  through the Service w8s imports for it. The model, the prompts and the
+  answers stay on your clusters. With no GPU, set GPUs to 0: slow, but it
+  runs on CPU anywhere.
+tags: [GPU, Ollama, OpenAI-compatible, ServiceExport, Helm]
+category: ai
+namespace: ai
+logo: logo.svg
+source: https://github.com/w8s-cloud/charts/tree/main/charts/private-inference
+chart:
+  url: oci://oci.w8s.cloud/charts/private-inference
+  version: 0.1.0
+
+# The GPU cluster runs the model; every client runs the endpoint that
+# reaches it. A cluster picked for both runs both. All share the
+# namespace (the client finds the GPU side's export by it) and the key.
+deploy:
+  roles:
+    - id: gpu
+      label: GPU cluster
+      help: Runs Ollama and exports it. Needs a schedulable nvidia.com/gpu, unless GPUs is 0.
+      pick: one
+      values:
+        role: gpu
+        ollama:
+          models: ["{{input.model}}"]
+          gpus: "{{input.gpus}}"
+    - id: client
+      label: Clusters that use the model
+      help: Each runs the endpoint apps call and the chat page.
+      pick: many
+      optional: true
+      values:
+        role: client
+        client:
+          defaultModel: "{{input.model}}"
+          gpuCluster: "{{role.gpu}}"
+          hostname: "{{input.hostname}}"
+  combined:
+    gpu+client:
+      role: both
+  inputs:
+    - id: model
+      label: Model
+      help: Pulled by Ollama on first start; any tag it knows works.
+      kind: select
+      options: [llama3.2:3b, llama3.1:8b, qwen2.5:7b, mistral:7b, gemma2:9b, phi4:14b]
+      default: llama3.2:3b
+    - id: gpus
+      label: GPUs
+      help: nvidia.com/gpu to request. 0 runs on CPU.
+      kind: number
+      default: "1"
+    - id: apiKey
+      label: Shared key
+      help: The GPU gateway refuses anything without it; the client side adds it.
+      kind: generated
+    - id: hostname
+      label: Hostname
+      help: Publishes the chat page, and with it the API, on every client. Leave empty unless it is behind access control.
+      optional: true
+  values:
+    clusterId: "{{cluster}}"
+    apiKey:
+      value: "{{input.apiKey}}"

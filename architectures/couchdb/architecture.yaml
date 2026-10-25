@@ -1,0 +1,43 @@
+name: Replicated CouchDB
+tagline: One database per cluster, taking writes everywhere, catching up over w8s tunnels.
+description: |
+  Every chosen cluster runs its own CouchDB and takes writes locally, so a
+  site that loses its link keeps working. Each one pulls from every other
+  over the Services w8s exports between them, and they converge once the
+  link is back: active/active and eventually consistent. A small guestbook
+  app shows it, optionally behind one hostname for every site.
+tags: [Active/active, Eventually consistent, ServiceExport, Helm]
+category: db
+namespace: guestbook
+logo: logo.svg
+source: https://github.com/w8s-cloud/charts/tree/main/charts/couchdb-replicated
+chart:
+  url: oci://oci.w8s.cloud/charts/couchdb-replicated
+  version: 0.1.0
+
+# One app deployment per chosen cluster: each told its own id and the
+# others', with the same credentials and hostname everywhere (the chart
+# requires them to match).
+deploy:
+  roles:
+    - id: site
+      label: Clusters
+      help: Each one runs a CouchDB and replicates with all the others. One cluster is a single, unreplicated site.
+      pick: many
+  inputs:
+    - id: password
+      label: Admin password
+      help: Shared by every site; replication signs in with it.
+      kind: generated
+    - id: hostname
+      label: Hostname
+      help: Publishes the guestbook on this hostname, served by every site.
+      optional: true
+  values:
+    clusterId: "{{cluster}}"
+    peers: "{{peers}}"
+    auth:
+      username: admin
+      password: "{{input.password}}"
+    app:
+      hostname: "{{input.hostname}}"

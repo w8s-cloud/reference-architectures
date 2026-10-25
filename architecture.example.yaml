@@ -1,0 +1,28 @@
+# Copy to architectures/<your-architecture>/architecture.yaml.
+# The directory name is the id: lowercase letters, digits and "-".
+# Only `name` is required; unknown keys are rejected.
+
+name: Redis with a replica per site
+tagline: A primary in one cluster, a read replica in every other.
+description: |
+  Each cluster runs a Redis replica that follows the primary over the
+  secure cluster connections. Reads stay local; writes go to the primary.
+tags: [Redis, Primary/replica, ServiceExport, Helm]
+# One of: db, ai, messaging, observability, storage, web, security, other.
+category: db
+
+# The picture: a file next to this one, .svg or .png, at most 256 KiB.
+logo: logo.svg
+
+# The package: the Helm chart w8s deploys. An https:// chart archive or an
+# oci:// reference. Without it the entry is listed but not deployable.
+chart:
+  url: oci://registry-1.docker.io/bitnamicharts/redis
+  version: 20.1.0
+
+# Where it installs by default (the id otherwise).
+namespace: cache
+
+# Optional: where to read more, and how you want to be credited.
+source: https://github.com/bitnami/charts
+author: Your name
