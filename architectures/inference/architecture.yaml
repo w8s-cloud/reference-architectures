@@ -4,18 +4,18 @@ description: |
   One cluster runs Ollama on its GPU and exports a small gateway in front
   of it. Every cluster that uses the model runs the client side: an
   in-cluster endpoint apps call by name (Ollama's API and an
-  OpenAI-compatible one) plus a chat page, reaching the GPU cluster
-  through the Service w8s imports for it. The model, the prompts and the
+  OpenAI-compatible one) plus Open WebUI as the chat page, reaching the
+  GPU cluster through the Service w8s imports for it. The model, the prompts and the
   answers stay on your clusters. With no GPU, set GPUs to 0: slow, but it
   runs on CPU anywhere.
-tags: [GPU, Ollama, OpenAI-compatible, ServiceExport, Helm]
+tags: [GPU, Ollama, Open WebUI, OpenAI-compatible, ServiceExport, Helm]
 category: ai
 namespace: ai
 logo: logo.svg
 source: https://github.com/w8s-cloud/charts/tree/main/charts/private-inference
 chart:
   url: oci://oci.w8s.cloud/charts/private-inference
-  version: 0.1.0
+  version: 0.2.0
 
 # The GPU cluster runs the model; every client runs the endpoint that
 # reaches it. A cluster picked for both runs both. All share the
@@ -33,7 +33,7 @@ deploy:
           gpus: "{{input.gpus}}"
     - id: client
       label: Clusters that use the model
-      help: Each runs the endpoint apps call and the chat page.
+      help: Each runs the endpoint apps call and Open WebUI.
       pick: many
       optional: true
       values:
@@ -42,6 +42,8 @@ deploy:
           defaultModel: "{{input.model}}"
           gpuCluster: "{{role.gpu}}"
           hostname: "{{input.hostname}}"
+          openWebui:
+            enabled: true
   combined:
     gpu+client:
       role: both
@@ -63,7 +65,7 @@ deploy:
       kind: generated
     - id: hostname
       label: Hostname
-      help: Publishes the chat page, and with it the API, on every client. Leave empty unless it is behind access control.
+      help: Publishes Open WebUI on every client; people sign in to it, and the first to sign up is its admin. Sign up before you share it.
       optional: true
   values:
     clusterId: "{{cluster}}"
