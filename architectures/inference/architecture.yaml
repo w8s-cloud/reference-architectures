@@ -31,6 +31,12 @@ deploy:
         ollama:
           models: ["{{input.model}}"]
           gpus: "{{input.gpus}}"
+          # GKE (Autopilot or node auto-provisioning) makes a node with
+          # this GPU for the Ollama pod, and a spot one when asked. Both
+          # are left out when empty, so other clusters are unaffected.
+          nodeSelector:
+            cloud.google.com/gke-accelerator: "{{input.accelerator}}"
+            cloud.google.com/gke-spot: "{{input.spot}}"
     - id: client
       label: Clusters that use the model
       help: Each runs the endpoint apps call and Open WebUI.
@@ -52,13 +58,25 @@ deploy:
       label: Model
       help: Pulled by Ollama on first start; any tag it knows works.
       kind: select
-      options: [llama3.2:3b, llama3.1:8b, qwen2.5:7b, mistral:7b, gemma2:9b, phi4:14b]
+      options: [llama3.2:3b, llama3.1:8b, qwen2.5:7b, qwen2.5-coder:7b, mistral:7b, gemma2:9b, phi4:14b]
       default: llama3.2:3b
     - id: gpus
       label: GPUs
       help: nvidia.com/gpu to request. 0 runs on CPU.
       kind: number
       default: "1"
+    - id: accelerator
+      label: GKE GPU type
+      help: On GKE, the GPU the Ollama node gets (nvidia-tesla-t4 is the cheapest; nvidia-l4 where T4 is not offered). Leave empty elsewhere.
+      kind: select
+      options: [nvidia-tesla-t4, nvidia-l4]
+      optional: true
+    - id: spot
+      label: GKE Spot
+      help: On GKE, "true" runs the Ollama node as Spot, at a fraction of the price; Google may reclaim it, and Ollama restarts on a new one. Leave empty elsewhere.
+      kind: select
+      options: ["true"]
+      optional: true
     - id: apiKey
       label: Shared key
       help: The GPU gateway refuses anything without it; the client side adds it.
