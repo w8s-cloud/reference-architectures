@@ -1,0 +1,95 @@
+name: Plane
+tagline: Issues, cycles, modules and pages for software teams, self-hosted.
+description: |
+  Plane tracks a team's work: issues and sub-issues, cycles (sprints),
+  modules, roadmaps, and pages for the specs next to them. One cluster runs
+  all of it with its own PostgreSQL, Valkey, RabbitMQ and MinIO, each on a
+  volume. One HTTPRoute serves the web app, API, spaces and admin on one
+  hostname, split by path the way Plane's own ingress does. The first
+  person to open /god-mode sets up the instance and becomes its
+  administrator, so do that before you share the address. Upstream chart
+  plane-ce (Plane Community Edition, AGPL-3.0); it runs a migration Job,
+  which needs agent chart 0.46.11 or later.
+tags: [Project management, Issues, Sprints, Helm]
+category: project
+namespace: plane
+logo: logo.png
+source: https://github.com/makeplane/helm-charts
+chart:
+  url: https://github.com/makeplane/helm-charts/releases/download/plane-ce-1.9.0/plane-ce-1.9.0.tgz
+  version: 1.9.0
+
+# One cluster. The chart's own ingress (Traefik IngressRoutes by default)
+# is off; the HTTPRoute below routes the same paths to the same Services,
+# which the chart names after the release (plane-<cluster>). Every key
+# and password the chart ships with is replaced by one generated here.
+deploy:
+  roles:
+    - id: site
+      label: Cluster
+      help: Runs Plane and everything it needs. Plane has no active/active mode, so one cluster.
+      pick: one
+  inputs:
+    - id: hostname
+      label: Hostname
+      help: Where Plane is served, e.g. plane-<your cluster slug>.w8s.cloud. Plane builds its links from it.
+    - id: secret_key
+      label: Secret key
+      help: Signs sessions and encrypts the instance settings (SMTP and OAuth secrets). Keep it; a new one makes those unreadable.
+      kind: generated
+    - id: live_key
+      label: Live server key
+      kind: generated
+    - id: db_password
+      label: PostgreSQL password
+      kind: generated
+    - id: mq_password
+      label: RabbitMQ password
+      kind: generated
+    - id: minio_password
+      label: MinIO password
+      kind: generated
+  values:
+    ingress:
+      enabled: false
+      appHost: "{{input.hostname}}"
+    # TLS ends at Cloudflare: links are https.
+    ssl:
+      externalTermination: true
+    env:
+      secret_key: "{{input.secret_key}}"
+      live_server_secret_key: "{{input.live_key}}"
+      pgdb_password: "{{input.db_password}}"
+    postgres:
+      volumeSize: 10Gi
+    redis:
+      volumeSize: 1Gi
+    rabbitmq:
+      default_password: "{{input.mq_password}}"
+      volumeSize: 1Gi
+    minio:
+      root_password: "{{input.minio_password}}"
+      volumeSize: 10Gi
+    extraObjects:
+      - apiVersion: gateway.networking.k8s.io/v1
+        kind: HTTPRoute
+        metadata:
+          name: plane
+        spec:
+          parentRefs:
+            - name: w8s-gateway
+              namespace: w8s-system
+          hostnames: ["{{input.hostname}}"]
+          rules:
+            - matches: [{path: {type: PathPrefix, value: /api}}, {path: {type: PathPrefix, value: /auth}}, {path: {type: PathPrefix, value: /static}}]
+              backendRefs: [{name: "plane-{{cluster}}-api", port: 8000}]
+            - matches: [{path: {type: PathPrefix, value: /live}}]
+              backendRefs: [{name: "plane-{{cluster}}-live", port: 3000}]
+            - matches: [{path: {type: PathPrefix, value: /spaces}}]
+              backendRefs: [{name: "plane-{{cluster}}-space", port: 3000}]
+            - matches: [{path: {type: PathPrefix, value: /god-mode}}]
+              backendRefs: [{name: "plane-{{cluster}}-admin", port: 3000}]
+            - matches: [{path: {type: PathPrefix, value: /uploads}}]
+              backendRefs: [{name: "plane-{{cluster}}-minio", port: 9000}]
+            - matches: [{path: {type: PathPrefix, value: /}}]
+              backendRefs: [{name: "plane-{{cluster}}-web", port: 3000}]
