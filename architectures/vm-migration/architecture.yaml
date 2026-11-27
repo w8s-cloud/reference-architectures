@@ -1,0 +1,30 @@
+name: Move VMs from vSphere
+tagline: Forklift moves the VMs that cannot be containerised yet from vSphere to KubeVirt, cold or warm. Not deployable yet.
+description: |
+  For the VMs that stay VMs for now, after the software that can move has
+  moved off them. Forklift, the upstream of Red Hat's Migration Toolkit
+  for Virtualization, reads the vCenter inventory with a read-only
+  account, maps port groups to the pod network or a bridged VLAN and
+  datastores to a StorageClass, and copies each VM to KubeVirt: cold (the
+  VM off for the copy) or warm (copied while it runs, then only the
+  changes at cutover). virt-v2v converts the guest on the way in. The
+  vSphere VM stays, powered off, as the way back.
+
+  It needs the VMs on Kubernetes architecture on the same cluster, and a
+  VDDK image the customer builds from VMware's Virtual Disk Development
+  Kit (VMware's licence does not let us ship it; warm migration needs it).
+
+  The migration inventory will be part of this entry: an RVTools export
+  imported, with a path (move the software, bring the VM, retire, keep)
+  and a wave per VM. It is not built yet.
+
+  Not deployable yet: Forklift has no clean, pinned install without OLM
+  today, so there is no chart. What is missing is written up in the
+  w8s-vm-migration README. When there is one, the cluster must allow it:
+  it brings an operator, CRDs and cluster roles, which a w8s app install
+  does not create today, so a cluster admin installs it.
+tags: [Forklift, vSphere, KubeVirt, Migration, VMware exit]
+category: other
+namespace: vm-migration
+logo: logo.svg
+source: https://github.com/w8s-cloud/charts/tree/main/charts/w8s-vm-migration
