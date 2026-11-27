@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="VMs on Kubernetes">
+  <!-- Drawn for this entry: a server with a VM's window on it. -->
+  <rect x="24" y="34" width="152" height="132" rx="16" fill="#1F4E79"/>
+  <rect x="44" y="56" width="112" height="72" rx="8" fill="#FFFFFF"/>
+  <rect x="44" y="56" width="112" height="16" rx="8" fill="#9CC3E6"/>
+  <rect x="44" y="64" width="112" height="8" fill="#9CC3E6"/>
+  <circle cx="56" cy="64" r="3.5" fill="#1F4E79"/>
+  <circle cx="68" cy="64" r="3.5" fill="#1F4E79"/>
+  <path d="M60 88 l14 10 l-14 10" fill="none" stroke="#1F4E79" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="82" y="104" width="30" height="6" rx="3" fill="#1F4E79"/>
+  <rect x="44" y="142" width="40" height="8" rx="4" fill="#9CC3E6"/>
+  <circle cx="148" cy="146" r="6" fill="#7FD17F"/>
+</svg>

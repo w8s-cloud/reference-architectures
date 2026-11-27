@@ -1,0 +1,35 @@
+name: VMs on Kubernetes
+tagline: For the VMs that cannot move to containers yet - KubeVirt runs them on the same nodes as everything else.
+description: |
+  Our first advice is to move the software off the VM: package the
+  application as a container, move its data once, and run it like any
+  other workload. This is for what cannot move yet - bought software
+  certified only for VMs, Windows-only systems, systems close to their
+  end. Give each such VM an exit date: containerise it, replace it or
+  retire it.
+
+  It installs KubeVirt 1.9.1 and CDI 1.66.1, the versions w8s pinned.
+  KubeVirt runs each VM as a pod, with KVM, on the cluster's own nodes;
+  CDI fills its disks from an image, a registry or an upload. A VM on the
+  pod network is published with an HTTPRoute and reached from the org's
+  other clusters with a ServiceExport, like any container, and people
+  reach its console as themselves through w8s.
+
+  Options: Multus, for VMs that keep their address on an existing VLAN
+  (with Cilium, cni.exclusive=false first); emulation, for nodes without
+  /dev/kvm (slow, labs only); and a local-path StorageClass for a lab.
+  Otherwise bring your own default StorageClass - Rook-Ceph or your
+  SAN's CSI driver, with RWX block volumes for live migration.
+
+  The cluster must allow it: the chart brings operators, CRDs and cluster
+  roles, which a w8s app install does not create today. A cluster admin
+  installs it with helm install (the chart's README); installing it from
+  w8s needs a permission for platform charts that is not decided yet.
+tags: [KubeVirt, CDI, Virtual machines, Multus, Helm]
+category: other
+namespace: vm-platform
+logo: logo.svg
+source: https://github.com/w8s-cloud/charts/tree/main/charts/w8s-vm-platform
+chart:
+  url: oci://oci.w8s.cloud/charts/w8s-vm-platform
+  version: 0.1.0
